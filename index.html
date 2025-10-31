@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prototipo ADN Merchandising — Demo</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#06b6d4; --accent-2:#7c3aed;
+      --glass: rgba(255,255,255,0.04);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; background:linear-gradient(180deg,#051025 0%, #071428 50%, #071827 100%);
+      color:#e6eef6; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:32px;
+    }
+    .app{
+      width:100%; max-width:1100px; border-radius:18px; overflow:hidden; box-shadow:0 10px 40px rgba(2,6,23,0.7);
+      display:grid; grid-template-columns:320px 1fr; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    /* Sidebar */
+    .sidebar{padding:22px; background:linear-gradient(180deg, rgba(11,18,28,0.6), rgba(8,12,20,0.4)); display:flex; flex-direction:column; gap:18px;}
+    .brand{display:flex; gap:12px; align-items:center;}
+    .logo{width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); display:flex; align-items:center; justify-content:center; font-weight:700; color:#021025; font-size:18px;}
+    .brand h1{margin:0; font-size:16px; letter-spacing:0.2px;}
+    nav{display:flex; flex-direction:column; gap:8px; margin-top:6px;}
+    .nav-btn{padding:10px 12px; border-radius:10px; display:flex; gap:12px; align-items:center; cursor:pointer; color:var(--muted); transition:all .18s ease; border:1px solid transparent;}
+    .nav-btn.active, .nav-btn:hover{background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color:var(--accent); border-color:rgba(6,182,212,0.06); transform:translateX(4px);}
+    .nav-ico{width:28px; height:28px; display:inline-grid; place-items:center; background:rgba(255,255,255,0.02); border-radius:8px;}
+    .profile{margin-top:auto; display:flex; gap:12px; align-items:center; padding-top:8px; border-top:1px solid rgba(255,255,255,0.02);}
+    .avatar{width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,#1f2937,#0f1724); display:flex; align-items:center; justify-content:center; color:var(--muted); font-weight:600;}
+    /* Main */
+    .main{padding:26px; display:flex; flex-direction:column; gap:18px;}
+    .topbar{display:flex; justify-content:space-between; align-items:center; gap:12px;}
+    .search{display:flex; gap:8px; align-items:center; background:var(--glass); padding:8px 12px; border-radius:12px; color:var(--muted); width:480px;}
+    .search input{background:transparent; border:0; outline:none; color:inherit; width:100%; font-size:14px;}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:16px; border:1px solid rgba(255,255,255,0.03);}
+    .header{display:flex; justify-content:space-between; align-items:center; gap:12px;}
+    h2{margin:0; font-size:18px;}
+    p.muted{margin:0; color:var(--muted); font-size:13px;}
+   
+    .form-grid{display:grid; grid-template-columns: 1fr 320px; gap:16px;}
+    label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px;}
+    input[type="text"], input[type="date"], select, textarea{width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.03); background:rgba(255,255,255,0.02); color:inherit; outline:none;}
+    textarea{min-height:120px; resize:vertical;}
+    .btn{display:inline-block; padding:10px 14px; border-radius:10px; cursor:pointer; border:0; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#021025; font-weight:700;}
+    .btn.ghost{background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03);}
+    .filebox{padding:12px; border-radius:10px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.03); text-align:center; color:var(--muted);}
+   
+    .orders-table{width:100%; border-collapse:collapse;}
+    .orders-table th, .orders-table td{padding:10px 8px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.02); font-size:13px; color:var(--muted);}
+    .status{padding:6px 10px; border-radius:999px; font-weight:600; font-size:12px; display:inline-block;}
+    .st-pending{background:rgba(255,165,0,0.12); color:#ffb366;}
+    .st-production{background:rgba(124,58,237,0.08); color:var(--accent-2);}
+    .st-ready{background:rgba(6,182,212,0.08); color:var(--accent);}
+    .actions{display:flex; gap:8px;}
+    .pill{background:rgba(255,255,255,0.02); padding:6px 8px; border-radius:8px; font-size:13px; color:var(--muted); cursor:pointer;}
+  
+    @media (max-width:900px){
+      .app{grid-template-columns:1fr; max-width:760px;}
+      .form-grid{grid-template-columns:1fr;}
+      .search{display:none;}
+    }
+    /* Micro interactions */
+    .small{font-size:12px; color:var(--muted);}
+    .preview-img{max-width:100%; border-radius:8px; border:1px solid rgba(255,255,255,0.03);}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">ADN</div>
+        <div>
+          <h1>ADN Merchandising</h1>
+          <div class="small">Gestión pedidos</div>
+        </div>
+      </div>
+
+      <nav>
+        <div class="nav-btn active" data-view="dashboard"><div class="nav-ico"></div> Panel</div>
+        <div class="nav-btn" data-view="new-order"><div class="nav-ico"></div> Nuevo pedido</div>
+        <div class="nav-btn" data-view="my-orders"><div class="nav-ico"></div> Mis pedidos</div>
+        <div class="nav-btn" data-view="admin"><div class="nav-ico"></div> Gestión</div>
+      </nav>
+
+      <div class="profile">
+        <div class="avatar">VD</div>
+        <div>
+          <div style="font-weight:600">Adrian</div>
+          <div class="small">Dueño · ADN</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar card" style="display:flex; gap:12px; align-items:center; justify-content:space-between">
+        <div>
+          <div class="header"><h2 id="page-title">Panel</h2><p class="muted" id="page-sub">Resumen rápido</p></div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center">
+          <div class="search"><input id="search" placeholder="Buscar pedidos, clientes..." /></div>
+          <div class="pill" id="new-sample">+ Pedido de muestra</div>
+        </div>
+      </div>
+
+  
+      <section id="dashboard" class="card view">
+        <div style="display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+          <div style="flex:1; min-width:220px" class="card">
+            <div class="header"><h2>Resumen</h2><p class="small">Pedidos recientes</p></div>
+            <div style="margin-top:12px; display:flex; gap:12px; align-items:center">
+              <div style="flex:1">
+                <div style="font-size:28px; font-weight:700">18</div>
+                <div class="small">Pedidos totales (mes)</div>
+              </div>
+              <div style="flex:1">
+                <div style="font-size:28px; font-weight:700">325</div>
+                <div class="small">Ingresos estimados</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex:2; min-width:320px" class="card">
+            <div class="header"><h2>Últimos pedidos</h2><p class="small">Actualizaciones recientes</p></div>
+            <table class="orders-table" style="margin-top:12px">
+              <thead><tr><th>Cliente</th><th>Producto</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+              <tbody id="recent-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+ 
+      <section id="new-order" class="card view" style="display:none">
+        <div class="header"><h2>Nuevo pedido personalizado</h2><p class="small">Formulario rápido</p></div>
+        <div style="margin-top:12px" class="form-grid">
+          <div>
+            <label>Cliente</label>
+            <input id="client-name" type="text" placeholder="Nombre de la empresa" />
+
+            <label style="margin-top:12px">Producto</label>
+            <select id="product-select">
+              <option value="lapicera">Lapicera metálica</option>
+              <option value="mochila">Mochila portanotebook</option>
+              <option value="mate">Mate algarrobo personalizado</option>
+              <option value="cuaderno">Cuaderno 24 hojas</option>
+            </select>
+
+            <div style="display:flex; gap:8px; margin-top:12px">
+              <div style="flex:1">
+                <label>Cantidad</label>
+                <input id="qty" type="text" value="100" />
+              </div>
+              <div style="width:180px">
+                <label>Fecha entrega</label>
+                <input id="due" type="date" />
+              </div>
+            </div>
+
+            <label style="margin-top:12px">Observaciones</label>
+            <textarea id="obs" placeholder="Detalles, colores, ubicación del logo, etc."></textarea>
+
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center">
+              <div class="filebox" id="filebox">Arrastrar o seleccionar archivo<br><small>(PNG, JPG, PDF)</small></div>
+              <input id="file-input" type="file" accept=".png,.jpg,.jpeg,.pdf" style="display:none" />
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center">
+              <button class="btn" id="submit-order">Confirmar pedido</button>
+              <button class="btn ghost" id="reset-order">Limpiar</button>
+            </div>
+
+            <div id="form-msg" class="small" style="margin-top:8px; color:#ffd8a8"></div>
+          </div>
+
+          <div>
+            <div class="card" style="padding:14px">
+              <div class="header"><h2>Previsualización</h2><p class="small">Detalle del pedido</p></div>
+              <div style="margin-top:12px">
+                <div><strong id="preview-client">-</strong></div>
+                <div class="small" id="preview-prod">-</div>
+                <div style="margin-top:10px"><img id="preview-img" class="preview-img" src="" alt="" style="display:none" /></div>
+                <div style="margin-top:8px" class="small" id="preview-obs"></div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px" class="card">
+              <div class="header"><h2>Tips rápidos</h2></div>
+              <ul class="small" style="margin:8px 0 0 16px; color:var(--muted)">
+                <li>Usá archivos con fondo transparente para mejores impresiones.</li>
+                <li>Confirmá fecha de entrega con 10 días hábiles de anticipación.</li>
+                <li>Podés repetir pedidos anteriores desde "Mis pedidos".</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- My Orders -->
+      <section id="my-orders" class="card view" style="display:none">
+        <div class="header"><h2>Mis pedidos</h2><p class="small">Historial y seguimiento</p></div>
+        <table class="orders-table" style="margin-top:12px">
+          <thead><tr><th>ID</th><th>Producto</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="orders-list"></tbody>
+        </table>
+      </section>
+
+      <!-- Admin -->
+      <section id="admin" class="card view" style="display:none">
+        <div class="header"><h2>Panel de Gestión</h2><p class="small">Filtrado y control</p></div>
+        <div style="margin-top:12px; display:flex; gap:12px; flex-wrap:wrap">
+          <div style="flex:1; min-width:280px" class="card">
+            <label>Filtrar por estado</label>
+            <select id="filter-state">
+              <option value="">Todos</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="En producción">En producción</option>
+              <option value="Listo">Listo</option>
+              <option value="Entregado">Entregado</option>
+            </select>
+
+            <div style="margin-top:12px">
+              <label>Reporte - rango fechas</label>
+              <div style="display:flex; gap:8px; align-items:center">
+                <input id="rstart" type="date" />
+                <input id="rend" type="date" />
+                <button class="btn" id="export">Exportar</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="flex:2; min-width:320px" class="card">
+            <table class="orders-table">
+              <thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Estado</th><th></th></tr></thead>
+              <tbody id="admin-list"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+<script>
+// Sample data
+let orders = [
+  {id:101, client:'Empresa Alfa', product:'Lapicera metálica', date:'2025-10-06', status:'Pendiente', obs:'Logo a color', file:''},
+  {id:102, client:'Beta SRL', product:'Mochila', date:'2025-10-07', status:'En producción', obs:'Bordado lateral', file:''},
+  {id:103, client:'Gamma', product:'Mate', date:'2025-10-08', status:'Listo', obs:'Grabado láser', file:''},
+  {id:104, client:'Delta', product:'Cuaderno', date:'2025-10-10', status:'Entregado', obs:'Con logo', file:''},
+];
+
+// Helpers
+const q = s=>document.querySelector(s);
+const qs = s=>document.querySelectorAll(s);
+
+function renderRecent(){
+  const tbody = q('#recent-list');
+  tbody.innerHTML='';
+  orders.slice().reverse().slice(0,4).forEach(o=>{
+    tbody.innerHTML += `<tr><td>${o.client}</td><td>${o.product}</td><td class="small">${o.date}</td><td><span class="status ${o.status==='Pendiente'?'st-pending':o.status==='En producción'?'st-production':'st-ready'}">${o.status}</span></td><td><div class="actions"><div class="pill" onclick="viewOrder(${o.id})">Ver</div></div></td></tr>`;
+  });
+}
+
+function renderOrders(filter=''){
+  const tbody = q('#orders-list');
+  tbody.innerHTML='';
+  orders.forEach(o=>{
+    if(filter && o.status!==filter) return;
+    tbody.innerHTML += `<tr><td>${o.id}</td><td>${o.product}</td><td class="small">${o.date}</td><td><span class="status ${o.status==='Pendiente'?'st-pending':o.status==='En producción'?'st-production':'st-ready'}">${o.status}</span></td><td><div class="actions"><div class="pill" onclick="repeatOrder(${o.id})">Repetir</div> <div class="pill" onclick="viewOrder(${o.id})">Detalles</div></div></td></tr>`;
+  });
+}
+
+function renderAdmin(filter=''){
+  const tbody = q('#admin-list');
+  tbody.innerHTML='';
+  orders.forEach(o=>{
+    if(filter && o.status!==filter) return;
+    tbody.innerHTML += `<tr><td>${o.id}</td><td>${o.client}</td><td>${o.product}</td><td>${o.status}</td><td><div class="actions"><div class="pill" onclick="changeState(${o.id})">Cambiar estado</div></div></td></tr>`;
+  });
+}
+
+// Interaction
+qs('.nav-btn').forEach(b=>b.addEventListener('click', e=>{
+  qs('.nav-btn').forEach(x=>x.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  const view = e.currentTarget.dataset.view;
+  showView(view);
+}));
+
+function showView(id){
+  q('#page-title').textContent = id==='dashboard'?'Panel': id==='new-order'?'Nuevo pedido': id==='my-orders'?'Mis pedidos':'Gestión';
+  q('#page-sub').textContent = id==='dashboard'?'Resumen rápido' : id==='new-order'?'Formulario rápido' : id==='my-orders'?'Historial y seguimiento':'Filtrado y control';
+  qs('.view').forEach(v=>v.style.display='none');
+  q('#'+id).style.display='block';
+  renderRecent(); renderOrders(); renderAdmin();
+}
+
+// File input
+q('#filebox').addEventListener('click', ()=> q('#file-input').click());
+q('#file-input').addEventListener('change', (ev)=>{
+  const f = ev.target.files[0];
+  if(!f) return;
+  q('#filebox').textContent = f.name;
+  if(f.type.startsWith('image/')){
+    const url = URL.createObjectURL(f);
+    q('#preview-img').src = url; q('#preview-img').style.display='block';
+  }
+});
+
+// Preview updates
+['client-name','product-select','qty','due','obs'].forEach(id=>{
+  q('#'+id).addEventListener('input', updatePreview);
+});
+function updatePreview(){
+  q('#preview-client').textContent = q('#client-name').value || '-';
+  q('#preview-prod').textContent = `${q('#product-select').value} · ${q('#qty').value} uds`;
+  q('#preview-obs').textContent = q('#obs').value || '';
+}
+
+// Submit order (local only)
+q('#submit-order').addEventListener('click', ()=>{
+  const client = q('#client-name').value.trim();
+  const prod = q('#product-select').options[q('#product-select').selectedIndex].text;
+  const qty = q('#qty').value.trim();
+  const due = q('#due').value || new Date().toISOString().slice(0,10);
+  if(!client || !qty){ q('#form-msg').textContent='Completar cliente y cantidad.'; return; }
+  const id = Math.floor(100 + Math.random()*900);
+  orders.push({id, client, product:prod, date:due, status:'Pendiente', obs:q('#obs').value || '', file: q('#file-input').files[0]?q('#file-input').files[0].name:''});
+  q('#form-msg').textContent='Pedido creado correctamente.';
+  q('#client-name').value=''; q('#qty').value='100'; q('#obs').value=''; q('#filebox').textContent='Arrastrar o seleccionar archivo'; q('#preview-img').style.display='none';
+  renderRecent(); renderOrders(); renderAdmin();
+});
+
+// Reset form
+q('#reset-order').addEventListener('click', ()=>{ q('#client-name').value=''; q('#qty').value='100'; q('#obs').value=''; q('#filebox').textContent='Arrastrar o seleccionar archivo'; q('#preview-img').style.display='none'; updatePreview(); });
+
+// Sample actions
+window.viewOrder = function(id){
+  const o = orders.find(x=>x.id===id);
+  alert(`Pedido ${o.id}\\nCliente: ${o.client}\\nProducto: ${o.product}\\nEstado: ${o.status}\\nObservaciones: ${o.obs}`);
+}
+window.repeatOrder = function(id){
+  const o = orders.find(x=>x.id===id);
+  q('#client-name').value = o.client; q('#product-select').value = o.product.toLowerCase().includes('lapicera')?'lapicera': o.product.toLowerCase().includes('mochila')?'mochila': o.product.toLowerCase().includes('mate')?'mate':'cuaderno';
+  q('#qty').value = o.qty || 100; q('#obs').value = o.obs; showView('new-order'); updatePreview();
+}
+window.changeState = function(id){
+  const o = orders.find(x=>x.id===id);
+  const next = prompt('Nuevo estado (Pendiente / En producción / Listo / Entregado)', o.status);
+  if(next){ o.status = next; renderRecent(); renderOrders(); renderAdmin(); alert('Estado actualizado. (simulado)'); }
+}
+
+// Filters / export
+q('#filter-state').addEventListener('change', ()=> renderAdmin(q('#filter-state').value));
+q('#export').addEventListener('click', ()=> alert('Exportar reporte (simulado).'));
+
+q('#new-sample').addEventListener('click', ()=>{
+  const id = Math.floor(100 + Math.random()*900);
+  orders.push({id, client:'Cliente Demo', product:'Lapicera metálica', date:new Date().toISOString().slice(0,10), status:'Pendiente', obs:'Pedido demo', file:''});
+  renderRecent(); renderOrders(); renderAdmin();
+});
+
+// Init
+showView('dashboard');
+updatePreview();
+</script>
+
+</body>
+</html>
